@@ -1,0 +1,6 @@
+@Korp.Estoque.API_HostAddress = http://localhost:5177
+
+GET {{Korp.Estoque.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Korp.Estoque.API/Korp.Estoque.API.csproj" />
+  <Project Path="Korp.Faturamento.API/Korp.Faturamento.API.csproj" Id="5a4f053e-3bea-482c-ade4-68b1ddfafca9" />
+</Solution>
