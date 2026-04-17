@@ -1,0 +1,165 @@
+<div class="admin-container">
+  <aside class="sidebar">
+    <div class="logo">KORP <span>ERP</span></div>
+    <nav>
+      <div class="nav-item active">📊 Dashboard</div>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <header class="top-bar">
+      <h2>Painel de Controle Integrado</h2>
+      <div class="user-info">Gabriel | Dev </div>
+    </header>
+
+    <div class="grid-inputs">
+      <section class="card">
+        <h3>📦 Gerenciar Estoque</h3>
+        <div class="form-grid">
+          <input #cod [value]="produtoEmEdicao?.codigo || ''" placeholder="Cód. Referência">
+          <input #desc [value]="produtoEmEdicao?.descricao || ''" placeholder="Descrição do Item">
+          <input #sald [value]="produtoEmEdicao?.saldo || ''" type="number" placeholder="Quantidade em Estoque">
+          <div class="btn-group">
+            <button class="btn-primary" (click)="salvarProduto(cod.value, desc.value, sald.value)">
+              {{ produtoEmEdicao ? 'ATUALIZAR ITEM' : 'ADICIONAR AO ESTOQUE' }}
+            </button>
+            <button *ngIf="produtoEmEdicao" class="btn-danger" (click)="limparEdicao()">Cancelar</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>📝 Emitir Nota Fiscal</h3>
+        <div class="form-grid inline-form">
+          <select #selP>
+            <option value="">Selecione um produto...</option>
+            <option *ngFor="let p of produtos" [value]="p.id">
+              {{ p.descricao }} (Saldo: {{ p.saldo }})
+            </option>
+          </select>
+          <input #selQ type="number" value="1" min="1" style="width: 80px;">
+          <button class="btn-secondary" (click)="adicionarAoCarrinho(selP.value, selQ.value)">+</button>
+        </div>
+
+        <div class="carrinho-lista" *ngIf="carrinho.length > 0">
+          <h4>Itens da Nota:</h4>
+          <ul>
+            <li *ngFor="let item of carrinho; let i = index">
+              <span>{{ item.Quantidade }}x {{ item.Descricao }}</span>
+              <button class="btn-sm-danger" (click)="removerDoCarrinho(i)">X</button>
+            </li>
+          </ul>
+          <button class="btn-accent" style="width: 100%; margin-top: 10px;" (click)="gerarNovaNota()">
+            FINALIZAR FATURAMENTO
+          </button>
+        </div>
+        <div *ngIf="carrinho.length === 0" class="empty-cart">
+          <p>Nenhum produto adicionado à nota ainda.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid-tables">
+      <div class="table-card">
+        <div class="table-header">Produtos Atuais em Estoque</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Cód.</th>
+              <th>Descrição</th>
+              <th>Saldo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of produtos">
+              <td>{{ p.codigo }}</td>
+              <td>{{ p.descricao }}</td>
+              <td><span class="status-pill green">{{ p.saldo }}</span></td>
+              <td>
+                <button class="icon-btn edit" (click)="prepararEdicao(p)">✏️</button>
+                <button class="icon-btn delete" (click)="excluir(p.id)">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">Histórico de Notas Fiscais</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Numeração</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let n of notas">
+              <tr>
+                <td>#{{ n.id }}</td>
+                <td>
+                  <span class="status-pill" [ngClass]="n.statusNota === 0 ? 'orange' : 'blue'">
+                    {{ n.statusNota === 0 ? 'ABERTA' : 'FECHADA' }}
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary btn-sm" (click)="verDetalhes(n)">
+                      {{ notaSelecionada?.id === n.id ? 'Fechar' : '🔍 Detalhes' }}
+                    </button>
+
+                    <button *ngIf="n.statusNota === 0" class="btn-accent btn-sm"
+                      [disabled]="processandoId === n.id || !n.itens || n.itens.length === 0"
+                      [title]="(!n.itens || n.itens.length === 0) ? 'Adicione itens para poder fechar esta nota' : 'Fechar Nota'"
+                      (click)="imprimir(n.id)">
+                      {{ processandoId === n.id ? '⏳ ...' : 'Imprimir' }}
+                    </button>
+
+                    <button class="btn-danger btn-sm" style="background-color: #ef4444; color: white;"
+                      (click)="excluirNota(n.id)">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="notaSelecionada?.id === n.id" class="detalhe-row">
+                <td colspan="3">
+                  <div class="detalhe-box">
+                    <h4>📦 Itens desta Nota:</h4>
+                    <ul>
+                      <li *ngFor="let item of n.itens"
+                        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding: 5px 0;">
+                        <span>
+                          Produto: <strong>{{ getDescricaoProduto(item.produtoId) }}</strong> | Qtd: <strong>{{
+                            item.quantidade }}</strong>
+                        </span>
+
+                        <button *ngIf="n.statusNota === 0" class="btn-danger btn-sm"
+                          style="padding: 2px 8px; font-size: 10px; background-color: #ef4444; color: white;"
+                          (click)="removerItemDaNotaExistente(n.id, item.produtoId)">
+                          X
+                        </button>
+                      </li>
+                    </ul>
+                    <div *ngIf="n.statusNota === 0" class="add-more-box">
+                      <select #addP>
+                        <option value="">Adicionar item...</option>
+                        <option *ngFor="let p of produtos" [value]="p.id">{{ p.descricao }} (Saldo: {{ p.saldo }})
+                        </option>
+                      </select>
+                      <input #addQ type="number" value="1" min="1" style="width: 60px;">
+                      <button class="btn-primary btn-sm"
+                        (click)="injetarItemEmNota(n.id, addP.value, addQ.value)">+</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
