@@ -16,7 +16,6 @@ namespace Korp.Estoque.API.Repositorios
 
         public async Task<ProdutoModel> BuscarPorId(int id)
         {
-            // Removido o .Include(p => p.Componentes)
             return await _dbContext.Produtos
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
